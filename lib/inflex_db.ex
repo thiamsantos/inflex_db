@@ -1,6 +1,6 @@
-defmodule InflexDb do
+defmodule InflexDB do
   @moduledoc """
-  Documentation for InflexDb.
+  Documentation for InflexDB.
   """
 
   @doc """
@@ -8,7 +8,7 @@ defmodule InflexDb do
 
   ## Examples
 
-      iex> InflexDb.hello()
+      iex> InflexDB.hello()
       :world
 
   """

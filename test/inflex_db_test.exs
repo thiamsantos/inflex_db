@@ -1,8 +1,8 @@
-defmodule InflexDbTest do
+defmodule InflexDBTest do
   use ExUnit.Case
-  doctest InflexDb
+  doctest InflexDB
 
   test "greets the world" do
-    assert InflexDb.hello() == :world
+    assert InflexDB.hello() == :world
   end
 end

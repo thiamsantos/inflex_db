@@ -1,4 +1,4 @@
-defmodule InflexDb.MixProject do
+defmodule InflexDB.MixProject do
   use Mix.Project
 
   def project do

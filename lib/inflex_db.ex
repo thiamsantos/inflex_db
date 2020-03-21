@@ -3,55 +3,90 @@ defmodule InflexDB do
   Documentation for InflexDB.
   """
 
-  alias InflexDB.{Client, Point, HTTPClient, LineProtocol}
+  alias InflexDB.{Client, Point, HTTPRequest, HTTPClient, LineProtocol}
 
   def ping(%Client{} = client) do
-    client.url
-    |> URI.parse()
-    |> Map.put(:path, "/ping")
-    |> HTTPClient.get()
+    request = %HTTPRequest{
+      method: :get,
+      base_url: client.url,
+      path: "/ping"
+    }
+
+    request
+    |> HTTPClient.request()
     |> handle_response()
   end
 
   def create_database(%Client{} = client, name) when is_binary(name) do
-    {query_params, headers} = auth_params(client)
+    {auth_query, auth_headers} = auth_params(client)
 
-    client.url
-    |> URI.parse()
-    |> Map.put(:path, "/query")
-    |> Map.put(:query, URI.encode_query(query_params))
-    |> HTTPClient.post(
-      %{"q" => "CREATE DATABASE \"#{name}\";"},
-      :urlencoded,
-      headers
-    )
+    request = %HTTPRequest{
+      method: :post,
+      base_url: client.url,
+      path: "/query",
+      query: auth_query,
+      body: %{"q" => "CREATE DATABASE \"#{name}\";"},
+      content_type: :urlencoded,
+      headers: auth_headers
+    }
+
+    request
+    |> HTTPClient.request()
     |> handle_response()
   end
 
   def delete_database(%Client{} = client, name) when is_binary(name) do
     {query_params, headers} = auth_params(client)
 
-    client.url
-    |> URI.parse()
-    |> Map.put(:path, "/query")
-    |> Map.put(:query, URI.encode_query(query_params))
-    |> HTTPClient.post(
-      %{"q" => "DROP DATABASE \"#{name}\";"},
-      :urlencoded,
-      headers
-    )
+    request = %HTTPRequest{
+      method: :post,
+      base_url: client.url,
+      path: "/query",
+      query: query_params,
+      body: %{"q" => "DROP DATABASE \"#{name}\";"},
+      content_type: :urlencoded,
+      headers: headers
+    }
+
+    request
+    |> HTTPClient.request()
     |> handle_response()
+  end
+
+  def list_databases(%Client{} = client) do
+    {query_params, headers} = auth_params(client)
+
+    request = %HTTPRequest{
+      method: :post,
+      base_url: client.url,
+      path: "/query",
+      query: query_params,
+      body: %{"q" => "SHOW DATABASES;"},
+      content_type: :urlencoded,
+      headers: headers
+    }
+
+    request
+    |> HTTPClient.request()
+    |> handle_list_databases()
   end
 
   def write_points(%Client{} = client, db, points) when is_binary(db) and is_list(points) do
     body = LineProtocol.encode(points)
     {query_params, headers} = auth_params(client)
 
-    client.url
-    |> URI.parse()
-    |> Map.put(:path, "/write")
-    |> Map.put(:query, URI.encode_query(Map.merge(query_params, %{"db" => db})))
-    |> HTTPClient.post(body, :text, headers)
+    request = %HTTPRequest{
+      method: :post,
+      base_url: client.url,
+      path: "/write",
+      query: Map.merge(query_params, %{"db" => db}),
+      body: body,
+      content_type: :text,
+      headers: headers
+    }
+
+    request
+    |> HTTPClient.request()
     |> handle_response()
   end
 
@@ -62,31 +97,22 @@ defmodule InflexDB do
   def query(%Client{} = client, db, query) when is_binary(db) and is_binary(query) do
     {query_params, headers} = auth_params(client)
 
-    client.url
-    |> URI.parse()
-    |> Map.put(:path, "/query")
-    |> Map.put(:query, URI.encode_query(Map.merge(query_params, %{"db" => db, "q" => query})))
-    |> HTTPClient.get(headers)
+
+    request= %HTTPRequest{
+      method: :get,
+      base_url: client.url,
+      path: "/query",
+      query: Map.merge(query_params, %{"db" => db, "q" => query}),
+      headers: headers
+    }
+
+    request
+    |> HTTPClient.request()
     |> handle_query()
   end
 
-  def list_databases(%Client{} = client) do
-    {query_params, headers} = auth_params(client)
-
-    client.url
-    |> URI.parse()
-    |> Map.put(:path, "/query")
-    |> Map.put(:query, URI.encode_query(query_params))
-    |> HTTPClient.post(
-      %{"q" => "SHOW DATABASES;"},
-      :urlencoded,
-      headers
-    )
-    |> handle_list_databases()
-  end
-
   defp handle_response({:ok, %{status: 204}}), do: :ok
-  defp handle_response({:ok, %{status: 200}}), do:  :ok
+  defp handle_response({:ok, %{status: 200}}), do: :ok
   defp handle_response({:ok, response}), do: {:error, response}
   defp handle_response({:error, reason}), do: {:error, reason}
 
@@ -142,15 +168,23 @@ defmodule InflexDB do
     {%{}, %{}}
   end
 
-  defp auth_params(%Client{auth_method: "basic", username: username, password: password}) when is_binary(username) and is_binary(password) do
+  defp auth_params(%Client{auth_method: "basic", username: username, password: password})
+       when is_binary(username) and is_binary(password) do
     {%{}, %{"authorization" => "Basic " <> Base.encode64(username <> ":" <> password)}}
   end
 
-  defp auth_params(%Client{auth_method: "params", username: username, password: password}) when is_binary(username) and is_binary(password) do
+  defp auth_params(%Client{auth_method: "params", username: username, password: password})
+       when is_binary(username) and is_binary(password) do
     {%{"u" => username, "p" => password}, %{}}
   end
 
-  defp auth_params(%Client{auth_method: "jwt", username: username, jwt_secret: jwt_secret, jwt_ttl: jwt_ttl}) when is_binary(username) and is_binary(jwt_secret) and is_integer(jwt_ttl) and jwt_ttl > 0 do
+  defp auth_params(%Client{
+         auth_method: "jwt",
+         username: username,
+         jwt_secret: jwt_secret,
+         jwt_ttl: jwt_ttl
+       })
+       when is_binary(username) and is_binary(jwt_secret) and is_integer(jwt_ttl) and jwt_ttl > 0 do
     header = %{
       "alg" => "HS256",
       "typ" => "JWT"
@@ -163,7 +197,8 @@ defmodule InflexDB do
       "exp" => epoch_now + jwt_ttl
     }
 
-    {_, jwt_token} = jwt_secret |> JOSE.JWK.from_oct() |> JOSE.JWT.sign(header, payload) |> JOSE.JWS.compact()
+    {_, jwt_token} =
+      jwt_secret |> JOSE.JWK.from_oct() |> JOSE.JWT.sign(header, payload) |> JOSE.JWS.compact()
 
     {%{}, %{"authorization" => "Bearer " <> jwt_token}}
   end

@@ -1,17 +1,38 @@
 defmodule InflexDB.HTTPClient do
   @moduledoc false
 
-  alias InflexDB.HTTPResponse
+  alias InflexDB.{HTTPRequest, HTTPResponse}
 
-  def get(%URI{} = url, headers \\ %{}) do
-    :httpc.request(:get, {to_charlist(URI.to_string(url)), encode_headers(headers)}, [], [])
+  @supported_content_types [:urlencoded, :text]
+
+  def request(%HTTPRequest{method: :get, base_url: base_url, path: path, headers: headers, query: query})
+      when is_binary(base_url) and is_binary(path) and is_map(headers) and is_map(query) do
+    uri = base_url |> URI.parse() |> Map.put(:path, path) |> Map.put(:query, URI.encode_query(query))
+
+    :httpc.request(:get, {to_charlist(URI.to_string(uri)), encode_headers(headers)}, [], [])
     |> format_response()
   end
 
-  def post(%URI{} = url, body, content_type, headers \\ %{}) do
+  def request(%HTTPRequest{
+        method: :post,
+        base_url: base_url,
+        path: path,
+        query: query,
+        body: body,
+        content_type: content_type,
+        headers: headers
+      })
+      when is_binary(base_url) and is_binary(path) and is_map(query) and is_map(body) or is_binary(body) and
+             content_type in @supported_content_types and is_map(headers) do
+    uri =
+      base_url
+      |> URI.parse()
+      |> Map.put(:path, path)
+      |> Map.put(:query, URI.encode_query(query))
+
     :httpc.request(
       :post,
-      {to_charlist(URI.to_string(url)), encode_headers(headers), get_content_type(content_type),
+      {to_charlist(URI.to_string(uri)), encode_headers(headers), get_content_type(content_type),
        encode(body, content_type)},
       [],
       []

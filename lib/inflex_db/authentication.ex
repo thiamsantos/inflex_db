@@ -1,7 +1,7 @@
 defmodule InflexDB.Authentication do
   @moduledoc false
 
-  alias InflexDB.{Client, HTTPRequest}
+  alias InflexDB.{Client, CurrentTime, HTTPRequest}
 
   def with_credentials(%HTTPRequest{} = request, %Client{auth_method: "none"}) do
     request
@@ -44,7 +44,7 @@ defmodule InflexDB.Authentication do
       "typ" => "JWT"
     }
 
-    epoch_now = DateTime.to_unix(DateTime.utc_now())
+    epoch_now = CurrentTime.epoch_now()
 
     payload = %{
       "username" => username,

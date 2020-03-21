@@ -22,7 +22,9 @@ defmodule InflexDB.MixProject do
   defp deps do
     [
       {:jason, "~> 1.1", optional: true},
-      {:jose, "~> 1.10", optional: true}
+      {:jose, "~> 1.10", optional: true},
+      {:bypass, "~> 1.0", only: :test},
+      {:mox, "~> 0.5.2", only: :test}
     ]
   end
 end

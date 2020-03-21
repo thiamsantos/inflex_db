@@ -5,9 +5,16 @@ defmodule InflexDB.HTTPClient do
 
   @supported_content_types [:urlencoded, :text]
 
-  def request(%HTTPRequest{method: :get, base_url: base_url, path: path, headers: headers, query: query})
+  def request(%HTTPRequest{
+        method: :get,
+        base_url: base_url,
+        path: path,
+        headers: headers,
+        query: query
+      })
       when is_binary(base_url) and is_binary(path) and is_map(headers) and is_map(query) do
-    uri = base_url |> URI.parse() |> Map.put(:path, path) |> Map.put(:query, URI.encode_query(query))
+    uri =
+      base_url |> URI.parse() |> Map.put(:path, path) |> Map.put(:query, URI.encode_query(query))
 
     :httpc.request(:get, {to_charlist(URI.to_string(uri)), encode_headers(headers)}, [], [])
     |> format_response()
@@ -22,8 +29,9 @@ defmodule InflexDB.HTTPClient do
         content_type: content_type,
         headers: headers
       })
-      when is_binary(base_url) and is_binary(path) and is_map(query) and is_map(body) or is_binary(body) and
-             content_type in @supported_content_types and is_map(headers) do
+      when (is_binary(base_url) and is_binary(path) and is_map(query) and is_map(body)) or
+             (is_binary(body) and
+                content_type in @supported_content_types and is_map(headers)) do
     uri =
       base_url
       |> URI.parse()

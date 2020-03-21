@@ -28,6 +28,21 @@ defmodule InflexDB do
     |> handle_response()
   end
 
+  def delete_database(%Client{} = client, name) when is_binary(name) do
+    {query_params, headers} = auth_params(client)
+
+    client.url
+    |> URI.parse()
+    |> Map.put(:path, "/query")
+    |> Map.put(:query, URI.encode_query(query_params))
+    |> HTTPClient.post(
+      %{"q" => "DROP DATABASE \"#{name}\";"},
+      :urlencoded,
+      headers
+    )
+    |> handle_response()
+  end
+
   def write_points(%Client{} = client, db, points) when is_binary(db) and is_list(points) do
     body = LineProtocol.encode(points)
     {query_params, headers} = auth_params(client)

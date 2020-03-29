@@ -142,7 +142,7 @@ defmodule InflexDB do
       |> List.first()
       |> Map.get("series")
       |> List.first()
-      |> Map.get("values")
+      |> Map.get("values", [])
       |> List.flatten()
 
     {:ok, result}

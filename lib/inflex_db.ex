@@ -107,27 +107,31 @@ defmodule InflexDB do
     result =
       body
       |> Map.get("results")
-      |> List.first()
-      |> Map.get("series")
-      |> Enum.map(fn series ->
-        columns = Map.get(series, "columns")
+      |> Enum.map(fn result ->
+        result
+        |> Map.get("series")
+        |> Enum.map(fn series ->
+          columns = Map.get(series, "columns")
 
-        %{
-          name: Map.get(series, "name"),
-          tags: Map.get(series, "tags"),
-          values:
-            series
-            |> Map.get("values")
-            |> Enum.map(fn value ->
-              columns
-              |> Enum.with_index()
-              |> Enum.map(fn {k, index} ->
-                {k, Enum.at(value, index)}
+          %{
+            statement_id: Map.get(result, "statement_id"),
+            name: Map.get(series, "name"),
+            tags: Map.get(series, "tags"),
+            values:
+              series
+              |> Map.get("values")
+              |> Enum.map(fn value ->
+                columns
+                |> Enum.with_index()
+                |> Enum.map(fn {k, index} ->
+                  {k, Enum.at(value, index)}
+                end)
+                |> Map.new()
               end)
-              |> Map.new()
-            end)
-        }
+          }
+        end)
       end)
+      |> List.flatten()
 
     {:ok, result}
   end

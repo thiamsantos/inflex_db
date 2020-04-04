@@ -88,7 +88,7 @@ defmodule InflexDB do
     |> handle_response()
   end
 
-  @spec write_points(client :: Client.t(), db :: String.t(), point :: Point.t()) ::
+  @spec write_point(client :: Client.t(), db :: String.t(), point :: Point.t()) ::
           :ok | error_response()
   def write_point(%Client{} = client, db, %Point{} = point) when is_binary(db) do
     write_points(client, db, [point])

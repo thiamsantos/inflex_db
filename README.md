@@ -1,5 +1,7 @@
 # InflexDB
 
+![CI](https://github.com/thiamsantos/inflex_db/workflows/CI/badge.svg)
+
 Elixir client for [InfluxDB](https://www.influxdata.com/products/influxdb-overview/)
 
 ## Installation

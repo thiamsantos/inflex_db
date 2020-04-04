@@ -1,6 +1,13 @@
 defmodule InflexDB.Point do
-  @enforce_keys [:measurement]
+  @enforce_keys [:measurement, :field_set]
   defstruct measurement: nil, tag_set: %{}, field_set: nil, timestamp: nil
+
+  @type t :: %__MODULE__{
+          measurement: String.t(),
+          tag_set: map(),
+          field_set: map(),
+          timestamp: integer() | nil
+        }
 end
 
 # weather,location=us-midwest temperature=82 1465839830100400200

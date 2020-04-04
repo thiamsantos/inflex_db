@@ -21,7 +21,7 @@ be found at [https://hexdocs.pm/inflex_db](https://hexdocs.pm/inflex_db).
 
 ## TODO
 
-client = %InflexDB.Client{url: "http://localhost:8086", username: "admin", password: "admin"}
+client = %InflexDB.Client{url: "http://localhost:8086", username: "admin", jwt_secret: "super-secret", auth_method: "jwt", jwt_ttl: 60}
 
 InflexDB.write_point(client, name, data, opts)
 InflexDB.write_points(client, data, opts)

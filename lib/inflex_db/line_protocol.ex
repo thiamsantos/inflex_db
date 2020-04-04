@@ -1,4 +1,6 @@
 defmodule InflexDB.LineProtocol do
+  @moduledoc false
+
   alias InflexDB.Point
 
   def encode(points) when is_list(points) do

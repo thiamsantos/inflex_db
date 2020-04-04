@@ -5,6 +5,9 @@ defmodule InflexDB do
 
   alias InflexDB.{Authentication, Client, Point, HTTPRequest, HTTPClient, LineProtocol}
 
+  @type error_response :: {:error, HTTPResponse.t()} | {:error, :econnrefused} | {:error, term()}
+
+  @spec ping(client :: Client.t()) :: :ok | error_response()
   def ping(%Client{} = client) do
     request = %HTTPRequest{
       method: :get,
@@ -17,6 +20,7 @@ defmodule InflexDB do
     |> handle_response()
   end
 
+  @spec create_database(client :: Client.t(), name :: String.t()) :: :ok | error_response()
   def create_database(%Client{} = client, name) when is_binary(name) do
     request = %HTTPRequest{
       method: :post,
@@ -32,6 +36,7 @@ defmodule InflexDB do
     |> handle_response()
   end
 
+  @spec delete_database(client :: Client.t(), name :: String.t()) :: :ok | error_response()
   def delete_database(%Client{} = client, name) when is_binary(name) do
     request = %HTTPRequest{
       method: :post,
@@ -47,6 +52,7 @@ defmodule InflexDB do
     |> handle_response()
   end
 
+  @spec list_databases(client :: Client.t()) :: {:ok, [String.t()]} | error_response()
   def list_databases(%Client{} = client) do
     request = %HTTPRequest{
       method: :post,
@@ -62,6 +68,8 @@ defmodule InflexDB do
     |> handle_list_databases()
   end
 
+  @spec write_points(client :: Client.t(), db :: String.t(), points :: [Point.t()]) ::
+          :ok | error_response()
   def write_points(%Client{} = client, db, points) when is_binary(db) and is_list(points) do
     body = LineProtocol.encode(points)
 
@@ -80,10 +88,14 @@ defmodule InflexDB do
     |> handle_response()
   end
 
+  @spec write_points(client :: Client.t(), db :: String.t(), point :: Point.t()) ::
+          :ok | error_response()
   def write_point(%Client{} = client, db, %Point{} = point) when is_binary(db) do
     write_points(client, db, [point])
   end
 
+  @spec query(client :: Client.t(), db :: String.t(), query :: String.t()) ::
+          {:ok, map()} | error_response()
   def query(%Client{} = client, db, query) when is_binary(db) and is_binary(query) do
     request = %HTTPRequest{
       method: :get,

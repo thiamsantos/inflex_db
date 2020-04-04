@@ -1,3 +1,11 @@
 defmodule InflexDB.HTTPResponse do
-  defstruct status: nil, headers: nil, body: nil
+  keys = [:status, :headers, :body]
+  @enforce_keys keys
+  defstruct keys
+
+  @type t :: %__MODULE__{
+          status: integer(),
+          headers: map(),
+          body: String.t() | map()
+        }
 end

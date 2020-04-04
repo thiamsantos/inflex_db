@@ -81,11 +81,13 @@ defmodule InflexDB.HTTPClient do
   end
 
   defp format_body(data, "application/json") when is_binary(data) do
-    case Jason.decode(data) do
+    case json_library().decode(data) do
       {:ok, decoded} -> decoded
       _ -> data
     end
   end
 
   defp format_body(data, _content_type) when is_binary(data), do: data
+
+  defp json_library, do: Application.get_env(:inflex_db, :json_library, Jason)
 end

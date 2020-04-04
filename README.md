@@ -21,7 +21,12 @@ Documentation can be found at [https://hexdocs.pm/inflex_db](https://hexdocs.pm/
 ## Usage
 
 ```elixir
-client = %InflexDB.Client{url: "http://localhost:8086", username: "admin", password: "admin"}
+client = %InflexDB.Client{
+  url: "http://localhost:8086",
+  username: "admin",
+  password: "admin",
+  auth_method: "basic"
+}
 
 points = [
   %InflexDB.Point{

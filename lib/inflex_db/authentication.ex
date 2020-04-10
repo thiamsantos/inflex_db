@@ -1,7 +1,7 @@
 defmodule InflexDB.Authentication do
   @moduledoc false
 
-  alias InflexDB.{Client, CurrentTime, HTTPRequest}
+  alias InflexDB.{Client, HTTPRequest}
 
   def with_credentials(%HTTPRequest{} = request, %Client{auth_method: "none"}) do
     request
@@ -31,29 +31,31 @@ defmodule InflexDB.Authentication do
     %{request | query: Map.merge(query, %{"u" => username, "p" => password})}
   end
 
-  def with_credentials(%HTTPRequest{headers: headers} = request, %Client{
-        auth_method: "jwt",
-        username: username,
-        jwt_secret: jwt_secret,
-        jwt_ttl: jwt_ttl
-      })
-      when is_map(headers) and is_binary(username) and is_binary(jwt_secret) and
-             is_integer(jwt_ttl) and jwt_ttl > 0 do
-    header = %{
-      "alg" => "HS256",
-      "typ" => "JWT"
-    }
+  if Code.ensure_loaded(JOSE) == {:module, JOSE} do
+    def with_credentials(%HTTPRequest{headers: headers} = request, %Client{
+          auth_method: "jwt",
+          username: username,
+          jwt_secret: jwt_secret,
+          jwt_ttl: jwt_ttl
+        })
+        when is_map(headers) and is_binary(username) and is_binary(jwt_secret) and
+              is_integer(jwt_ttl) and jwt_ttl > 0 do
+      header = %{
+        "alg" => "HS256",
+        "typ" => "JWT"
+      }
 
-    epoch_now = CurrentTime.epoch_now()
+      epoch_now = InflexDB.CurrentTime.epoch_now()
 
-    payload = %{
-      "username" => username,
-      "exp" => epoch_now + jwt_ttl
-    }
+      payload = %{
+        "username" => username,
+        "exp" => epoch_now + jwt_ttl
+      }
 
-    {_, jwt_token} =
-      jwt_secret |> JOSE.JWK.from_oct() |> JOSE.JWT.sign(header, payload) |> JOSE.JWS.compact()
+      {_, jwt_token} =
+        jwt_secret |> JOSE.JWK.from_oct() |> JOSE.JWT.sign(header, payload) |> JOSE.JWS.compact()
 
-    %{request | headers: Map.merge(headers, %{"authorization" => "Bearer " <> jwt_token})}
+      %{request | headers: Map.merge(headers, %{"authorization" => "Bearer " <> jwt_token})}
+    end
   end
 end

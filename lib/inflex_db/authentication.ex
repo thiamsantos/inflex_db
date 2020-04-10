@@ -39,7 +39,7 @@ defmodule InflexDB.Authentication do
           jwt_ttl: jwt_ttl
         })
         when is_map(headers) and is_binary(username) and is_binary(jwt_secret) and
-              is_integer(jwt_ttl) and jwt_ttl > 0 do
+               is_integer(jwt_ttl) and jwt_ttl > 0 do
       header = %{
         "alg" => "HS256",
         "typ" => "JWT"

@@ -7,6 +7,17 @@ defmodule InflexDB do
 
   @type error_response :: {:error, HTTPResponse.t()} | {:error, :econnrefused} | {:error, term()}
 
+  @doc """
+  Check the status of yout InfluxDB instance.
+
+  ## Example
+
+  ```elixir
+  client = %InflexDB.Client{}
+
+  InflexDB.ping(client)
+  ```
+  """
   @spec ping(client :: Client.t()) :: :ok | error_response()
   def ping(%Client{} = client) do
     request = %HTTPRequest{

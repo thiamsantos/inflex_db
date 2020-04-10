@@ -31,6 +31,17 @@ defmodule InflexDB do
     |> handle_response()
   end
 
+  @doc """
+  Creates a new database.
+
+  ## Example
+
+  ```elixir
+  client = %InflexDB.Client{}
+
+  InflexDB.create_database(client, "mydb")
+  ```
+  """
   @spec create_database(client :: Client.t(), name :: String.t()) :: :ok | error_response()
   def create_database(%Client{} = client, name) when is_binary(name) do
     request = %HTTPRequest{
@@ -47,6 +58,18 @@ defmodule InflexDB do
     |> handle_response()
   end
 
+  @doc """
+  Deletes all of the data, measurements, series, continuous queries, and retention policies from the specified database.
+  If you attempt to drop a database that does not exist, InfluxDB does not return an error.
+
+  ## Example
+
+  ```elixir
+  client = %InflexDB.Client{}
+
+  InflexDB.delete_database(client, "mydb")
+  ```
+  """
   @spec delete_database(client :: Client.t(), name :: String.t()) :: :ok | error_response()
   def delete_database(%Client{} = client, name) when is_binary(name) do
     request = %HTTPRequest{
@@ -63,6 +86,16 @@ defmodule InflexDB do
     |> handle_response()
   end
 
+  @doc """
+  Returns a list of all databases on your instance.
+
+  ```elixir
+  client = %InflexDB.Client{}
+
+  InflexDB.list_databases(client)
+  # {:ok, ["_internal", "mydb"]}
+  ```
+  """
   @spec list_databases(client :: Client.t()) :: {:ok, [String.t()]} | error_response()
   def list_databases(%Client{} = client) do
     request = %HTTPRequest{

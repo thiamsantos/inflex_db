@@ -1,9 +1,11 @@
 defmodule InflexDB do
   @moduledoc """
-  Documentation for InflexDB.
+  Client for [InfluxDB](https://www.influxdata.com/products/influxdb-overview/)
+
+  Checkout `InflexDB.Client` on how to instantiate and configure a client.
   """
 
-  alias InflexDB.{Authentication, Client, Point, HTTPRequest, HTTPClient, LineProtocol}
+  alias InflexDB.{Authentication, Client, Point, HTTPRequest, HTTPResponse, HTTPClient, LineProtocol}
 
   @type error_response :: {:error, HTTPResponse.t()} | {:error, :econnrefused} | {:error, term()}
 
@@ -112,6 +114,30 @@ defmodule InflexDB do
     |> handle_list_databases()
   end
 
+  @doc """
+  Write points to a pre-existing database.
+
+  ## Example
+
+  ```elixir
+  client = %InflexDB.Client{}
+
+  points = [
+    %Point{
+      measurement: "weather",
+      tag_set: %{location: "us-midwest"},
+      field_set: %{temperature: 82}
+    },
+    %Point{
+      measurement: "weather",
+      tag_set: %{location: "us-midwest"},
+      field_set: %{temperature: 76}
+    }
+  ]
+
+  InflexDB.write_points(client, "mydb", points)
+  ```
+  """
   @spec write_points(client :: Client.t(), db :: String.t(), points :: [Point.t()]) ::
           :ok | error_response()
   def write_points(%Client{} = client, db, points) when is_binary(db) and is_list(points) do
@@ -132,12 +158,143 @@ defmodule InflexDB do
     |> handle_response()
   end
 
+  @doc """
+  Write a single point to a pre-existing database.
+
+  ## Example
+
+  ```elixir
+  client = %InflexDB.Client{}
+
+  point = %Point{
+    measurement: "weather",
+    tag_set: %{location: "us-midwest"},
+    field_set: %{temperature: 82}
+  }
+
+  InflexDB.write_point(client, "mydb", point)
+  ```
+  """
   @spec write_point(client :: Client.t(), db :: String.t(), point :: Point.t()) ::
           :ok | error_response()
   def write_point(%Client{} = client, db, %Point{} = point) when is_binary(db) do
     write_points(client, db, [point])
   end
 
+  @doc """
+  Query data with a SELECT statement.
+
+  ## Example
+
+  ```elixir
+  client = %InflexDB.Client{}
+
+  InflexDB.query(client, "mydb", "SELECT * FROM weather")
+  # {:ok,
+  #  [
+  #    %{
+  #      name: "weather",
+  #      statement_id: 0,
+  #      tags: nil,
+  #      values: [
+  #        %{
+  #          "location" => "us-midwest",
+  #          "season" => "summer",
+  #          "temperature" => 82,
+  #          "time" => "2020-03-29T20:34:46.725338219Z"
+  #        },
+  #        %{
+  #          "season" => "summer",
+  #          "location" => "us-east",
+  #          "temperature" => 879,
+  #          "time" => "2020-03-29T20:40:46.790074049Z"
+  #        }
+  #      ]
+  #    }
+  #  ]}
+  ```
+
+  Multiple `SELECT` statements are also supported:
+
+  ```elixir
+  client = %Inflex.Client{}
+  statement = "SELECT * FROM weather group by location; SELECT * from weather2 group by season"
+
+  InflexDB.query(client, "mydb", statement)
+  # {:ok,
+  #  [
+  #    %{
+  #      name: "weather",
+  #      statement_id: 0,
+  #      tags: %{"location" => "us-east"},
+  #      values: [
+  #        %{
+  #          "season" => "summer",
+  #          "temperature" => 879,
+  #          "time" => "2020-03-29T20:40:46.790074049Z"
+  #        },
+  #        %{
+  #          "season" => "winter",
+  #          "temperature" => 8096,
+  #          "time" => "2020-03-29T20:40:46.790074049Z"
+  #        }
+  #      ]
+  #    },
+  #    %{
+  #      name: "weather",
+  #      statement_id: 0,
+  #      tags: %{"location" => "us-midwest"},
+  #      values: [
+  #        %{
+  #          "season" => "summer",
+  #          "temperature" => 82,
+  #          "time" => "2020-03-29T20:34:46.725338219Z"
+  #        },
+  #        %{
+  #          "season" => "summer",
+  #          "temperature" => 82,
+  #          "time" => "2020-03-29T20:35:15.531091771Z"
+  #        }
+  #      ]
+  #    },
+  #    %{
+  #      name: "weather2",
+  #      statement_id: 1,
+  #      tags: %{"season" => "summer"},
+  #      values: [
+  #        %{
+  #          "location" => "us-east",
+  #          "temperature" => 842,
+  #          "time" => "2020-03-29T20:59:41.755035346Z"
+  #        },
+  #        %{
+  #          "location" => "us-midwest",
+  #          "temperature" => 2342,
+  #          "time" => "2020-03-29T20:59:41.755035346Z"
+  #        }
+  #      ]
+  #    },
+  #    %{
+  #      name: "weather2",
+  #      statement_id: 1,
+  #      tags: %{"season" => "winter"},
+  #      values: [
+  #        %{
+  #          "location" => "us-east",
+  #          "temperature" => 7554,
+  #          "time" => "2020-03-29T20:59:41.755035346Z"
+  #        },
+  #        %{
+  #          "location" => "us-midwest",
+  #          "temperature" => 5473,
+  #          "time" => "2020-03-29T20:59:41.755035346Z"
+  #        }
+  #      ]
+  #    }
+  #  ]}
+  ```
+
+  """
   @spec query(client :: Client.t(), db :: String.t(), query :: String.t()) ::
           {:ok, map()} | error_response()
   def query(%Client{} = client, db, query) when is_binary(db) and is_binary(query) do

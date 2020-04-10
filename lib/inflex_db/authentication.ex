@@ -31,7 +31,7 @@ defmodule InflexDB.Authentication do
     %{request | query: Map.merge(query, %{"u" => username, "p" => password})}
   end
 
-  if Code.ensure_loaded(JOSE) == {:module, JOSE} do
+  if Code.ensure_loaded?(JOSE) do
     def with_credentials(%HTTPRequest{headers: headers} = request, %Client{
           auth_method: "jwt",
           username: username,

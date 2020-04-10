@@ -12,7 +12,7 @@ by adding `inflex_db` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:inflex_db, "~> 0.1.1"},
+    {:inflex_db, "~> 0.1.2"},
     {:jason, "~> 1.1"}
   ]
 end

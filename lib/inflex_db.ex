@@ -5,7 +5,15 @@ defmodule InflexDB do
   Checkout `InflexDB.Client` on how to instantiate and configure a client.
   """
 
-  alias InflexDB.{Authentication, Client, Point, HTTPRequest, HTTPResponse, HTTPClient, LineProtocol}
+  alias InflexDB.{
+    Authentication,
+    Client,
+    Point,
+    HTTPRequest,
+    HTTPResponse,
+    HTTPClient,
+    LineProtocol
+  }
 
   @type error_response :: {:error, HTTPResponse.t()} | {:error, :econnrefused} | {:error, term()}
 
